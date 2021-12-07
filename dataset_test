@@ -1,8 +1,0 @@
-import torch
-from torchvision import datasets, transforms
-
-train_data = datasets.MNIST('data', train=True, download=True, transform=transforms.ToTensor())
-
-for idx, batch in enumerate(train_data):
-    print(batch)
-    break
