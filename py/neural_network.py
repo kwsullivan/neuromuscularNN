@@ -23,18 +23,33 @@ class Net(nn.Module):
         return F.log_softmax(x, dim=1)
 
 class CNN(nn.Module):
-    def __init__(self, in_channels=1, num_classes=10):
+    def __init__(self, in_channels=1, num_classes=2):
         super(CNN, self).__init__()
+        self.conv1 = nn.Conv1d(in_channels=1, out_channels=2, kernel_size=3, stride=2)
+        self.pool = nn.MaxPool1d(kernel_size=2, stride=2)
+        self.conv2 = nn.Conv1d(in_channels=2, out_channels=4, kernel_size=3, stride=2)
+        self.fc1 = nn.Linear(4*50*50, num_classes)
 
-batch_size = 3
+    def forward(self, x):
+        x = F.relu(self.conv1(x))
+        x = self.pool(x)
+        x = F.relu(self.conv2(x))
+        x = self.pool(x)
+        x = self.fc1(x)
+        return x
 
-train = EmgArrayDataset(dataset_file='../datasets/emg_dataset10_train.pt')
-test = EmgArrayDataset(dataset_file='../datasets/emg_dataset10_test.pt')
-trainset = DataLoader(train, batch_size, shuffle=True)
-testset = DataLoader(test, batch_size, shuffle=True)
 
-net = Net()
+train = EmgArrayDataset(csv_file='../csv/emg_data_labels_basic.csv', root_dir='../databuilder/test/basic/')
+# test = EmgArrayDataset(dataset_file='../datasets/emg_dataset10_test.pt')
+trainset = DataLoader(train, batch_size=8, shuffle=False)
+# testset = DataLoader(test, batch_size, shuffle=True)
 
+# for data in trainset:
+#     print(data)
+model = CNN()
+model(trainset).shape
+
+'''
 optimizer = optim.Adam(net.parameters(), lr=0.00001)
 correct = 0
 total = 0
@@ -58,6 +73,7 @@ for epoch in range(EPOCHS):
         running_loss = 0.0
 print('Finished Training')
 
+
 dataiter = iter(testset)
 X, y, z = dataiter.next()
 #print('Ground Truth: ', ' '.join('%5f' % [y[j]] for j in range(10)))
@@ -72,3 +88,5 @@ _, predicted = torch.max(outputs, 1)
 print('Predicted')
 for j in range(batch_size):
     print(predicted[j].float())
+
+'''

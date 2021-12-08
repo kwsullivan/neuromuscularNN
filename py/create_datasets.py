@@ -7,19 +7,22 @@ import pandas as pd
 
 class EmgArrayDataset(Dataset):
 
-    def __init__(self, dataset_file):
-        self.emg_data = torch.load(dataset_file)
+    def __init__(self, csv_file, root_dir):
+        self.severity = pd.read_csv(csv_file)
+        self.root_dir = root_dir
 
     def __len__(self):
-        return len(self.emg_data)
+        return len(self.severity)
 
     def __getitem__(self, idx):
-
-        data = torch.tensor(self.emg_data[idx]['data']).float()
-        neuropathy = torch.tensor(self.emg_data[idx]['neuropathy'])
-        myopathy = torch.tensor(self.emg_data[idx]['myopathy'])
-
-        return data, neuropathy, myopathy
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+        file_name = os.path.join(   self.root_dir,
+                                    self.severity.iloc[idx, 0])
+        data = get_emg_array(file_name, 200, 125200)
+        label = self.severity.iloc[idx][2]
+        sample = {'data' : data, 'label' : label}
+        return sample
 
 def get_emg_array(filename, start, end):
     with open(filename, 'rb') as fh:
@@ -69,22 +72,29 @@ def get_emg_array(filename, start, end):
 # WRITE DATASETS TO FILE
 #######################################################################################
 
-csv_file='../csv/emg_data_labels_10.csv'
-sim_dir='../emgOutput/sims10/test/'
-dataset_file='../datasets/emg_dataset10_test.pt'
+# level='basic'
+# data='train'
 
-emg_data = pd.read_csv(csv_file)
-emg_out = []
-for idx in range(emg_data.shape[0]):
-    file_name = os.path.join(sim_dir,
-                            emg_data.iloc[idx, 0])
 
-    data = get_emg_array(file_name, 200, 125200)
-    neuropathy = emg_data.iloc[idx, 3]
-    myopathy = emg_data.iloc[idx, 4]
-    # labels = np.array([labels])
-    # labels = labels.astype('float').reshape(-1, 2)
-    emg_out.append({ 'data': data, 'neuropathy': neuropathy, 'myopathy': myopathy})
-    
-torch.save(emg_out, dataset_file)
+# csv_file = f"../csv/emg_data_labels_{level}.csv"
+# sim_dir = f"../databuilder/{data}/{level}"
+# file_array = ['healthy/', 'neuro50/']
+# dataset_file = f"../datasets/emg_dataset_{level}_{data}.pt"
 
+
+
+# emg_data = pd.read_csv(csv_file)
+# emg_out = []
+# for idx in range(emg_data.shape[0]):
+#     file_name = os.path.join(sim_dir,
+#                             emg_data.iloc[idx, 0])
+#     data = get_emg_array(file_name, 200, 125200)
+#     # neuropathy = emg_data.iloc[idx, 2]
+#     # emg_out.append({ 'data': data, 'neuropathy': neuropathy })
+#     emg_out.append(data)
+
+# for curr in emg_out:
+#     print(curr[0:5])
+#     print(' -- ')
+
+# torch.save(emg_out, dataset_file)
